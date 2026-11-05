@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "erp/schemas/treasury_account.schema.json",
+  "title": "خزينة/حساب بنكي (treasury_accounts)",
+  "description": "كل خزينة أو حساب بنكي له حساب فرعي في الشجرة (1110-Txx نقدي | 1115-Bxx بنكي). الرصيد دائماً من دفتر الأستاذ — لا حقل رصيد قابل للتعديل. لا سحب مكشوف (فحص داخل المعاملة).",
+  "type": "object",
+  "required": ["id", "name", "type", "accountCode", "active", "createdAt"],
+  "additionalProperties": true,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "type": { "enum": ["cash", "bank"] },
+    "accountCode": { "type": "string", "examples": ["1110-T01", "1115-B01"] },
+    "bankName": { "type": ["string", "null"] },
+    "accountNumberMasked": { "type": ["string", "null"], "description": "****آخر 4 خانات فقط" },
+    "active": { "type": "boolean" },
+    "createdBy": { "type": "object" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

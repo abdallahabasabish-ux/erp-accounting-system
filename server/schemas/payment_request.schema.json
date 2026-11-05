@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "erp/schemas/payment_request.schema.json",
+  "title": "طلب دفع بوابة العميل (payment_requests)",
+  "description": "العميل يرفع طلب دفع مع مرجع/إثبات — يبقى pending بلا أي أثر محاسبي حتى اعتماد المدير الذي يحوّله سند قبض مرحَّلاً (قيد + تخصيص فواتير) في معاملة واحدة.",
+  "type": "object",
+  "required": ["id", "customerId", "amount", "method", "status", "source", "requestedBy", "createdAt"],
+  "additionalProperties": true,
+  "properties": {
+    "id": { "type": "string" },
+    "customerId": { "type": "string" },
+    "amount": { "type": "integer", "minimum": 1, "description": "بالقروش" },
+    "method": { "type": "string" },
+    "reference": { "type": "string", "description": "رقم مرجع التحويل" },
+    "receiptUrl": { "type": ["string", "null"] },
+    "orderId": { "type": ["string", "null"] },
+    "status": { "enum": ["pending", "approved", "rejected"] },
+    "source": { "const": "portal" },
+    "requestedBy": { "type": "object" },
+    "approvedAt": { "type": ["string", "null"], "format": "date-time" },
+    "approvedBy": { "type": ["object", "null"] },
+    "receiptId": { "type": ["string", "null"], "description": "سند القبض الناتج عن الاعتماد" },
+    "receiptNumber": { "type": ["string", "null"] },
+    "rejectedAt": { "type": ["string", "null"], "format": "date-time" },
+    "rejectionReason": { "type": ["string", "null"] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

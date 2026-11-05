@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// ============================================================
+// قواعد Firestore لنظام ERP المحاسبي (النموذج الجديد)
+// ============================================================
+// الفلسفة: العميل لا يكتب شيئاً — كل شيء عبر خادم Express بصلاحيات Admin
+// (الـ Admin SDK يتجاوز هذه القواعد بطبيعته، فالقواعد هنا صمام أمان ضد أي
+// استدعاء مباشر من المتصفح أو سكربت خارجي بمفاتيح الويب المكشوفة).
+//
+// وضعان للنشر:
+// 1) مشروع Firebase منفصل للـ ERP (موصى به): انشر هذه القواعد كما هي.
+// 2) نفس المشروع مع النظام القديم: ضع FIRESTORE_COLLECTION_PREFIX=erp_
+//    في الخادم ثم انسخ كتلة "مجموعات ERP" مع استبدال الاسم بالبادئة،
+//    أو أبقِ مشروعين منفصلين تماماً.
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- مجموعات ERP: رفض شامل لأي وصول من العميل ----
+    // (القراءة أيضاً ممنوعة من المتصفح؛ الواجهة الجديدة تستهلك REST API فقط)
+    match /accounts/{doc}               { allow read, write: if false; }
+    match /account_balances/{doc}       { allow read, write: if false; }
+    match /journal_entries/{doc}        { allow read, write: if false; }
+    match /idempotency_index/{doc}      { allow read, write: if false; }
+    match /reversal_index/{doc}         { allow read, write: if false; }
+    match /counters/{doc}               { allow read, write: if false; }
+    match /invoices/{doc}               { allow read, write: if false; }
+    match /receipts/{doc}               { allow read, write: if false; }
+    match /payment_requests/{doc}       { allow read, write: if false; }
+    match /treasury_accounts/{doc}      { allow read, write: if false; }
+    match /vouchers/{doc}               { allow read, write: if false; }
+    match /bank_reconciliations/{doc}   { allow read, write: if false; }
+    match /expenses/{doc}               { allow read, write: if false; }
+    match /advances/{doc}               { allow read, write: if false; }
+    match /employees/{doc}              { allow read, write: if false; }
+    match /payroll_runs/{doc}           { allow read, write: if false; }
+    match /fiscal_periods/{doc}         { allow read, write: if false; }
+    match /audit_logs/{doc}             { allow read, write: if false; }
+    match /settings/{doc}               { allow read, write: if false; }
+    match /suppliers/{doc}              { allow read, write: if false; }
+
+    // إذا اخترت بادئة erp_ على نفس المشروع، أضف:
+    // match /erp_{col}/{doc} { allow read, write: if false; }  ← قاعدة عامة
+    // أو ببساطة: ارفض كل ما يبدأ بـ erp_ عبر دالة مطابقة أعلاه لكل مجموعة.
+
+    // ---- مجموعة users: القراءة للمالك فقط، والكتابة من الخادم فقط ----
+    // (الخادم يهيئ وثيقة المستخدم أول دخول عبر Admin SDK)
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    // ---- كل ما عداه: رفض افتراضي ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ============================================================
+// ملاحظات النشر:
+// 1) قدّم القواعد: firebase deploy --only firestore:rules
+// 2) يُنصح بتفعيل App Check (وضع الإجبار) لحماية من الاستهلاك الخارجي.
+// 3) تفعيل PITR (Point-in-time recovery) على Firestore للنسخ اللحظي —
+//    خطة Blaze؛ وبديله المجاني: تصدير مجدول خارجي.
+// 4) مجموعة users هي الوحيدة ذات وصول عميل (قراءة وثيقتها فقط) لأن
+//    الواجهة تحتاج اسم المستخدم ودوره بعد الدخول — لا حقول حساسة فيها.
+// ============================================================
